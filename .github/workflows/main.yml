@@ -1,5 +1,4 @@
 name: Build Kernel
-
 on:
   push:
     branches: [ sashimi ]
@@ -15,40 +14,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Install dependencies & clang14
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential \
-            clang lld \
-            bison flex \
-            libssl-dev bc git python3 \
-            zip
+          sudo apt install -y bison flex bc libssl-dev zip python3
+          sudo apt install -y clang-14 lld-14 aarch64-linux-gnu-gcc
 
-      - name: Verify defconfig file
+      - name: Fix armv8a typo
         run: |
-          ls arch/arm64/configs/ | grep -i blossom || true
+          find . -type f \( -name "Makefile*" -o -name "*.mk" -o -name "*.sh" \) -exec sed -i 's/mcpu=armv8a/mcpu=armv8-a/g' {} +
 
-      - name: Build defconfig
+      - name: Generate defconfig
         run: |
-          make O=out ARCH=arm64 CC=clang LD=lld blossom_defconfig
+          make O=out ARCH=arm64 CC=clang-14 LD=ld.lld-14 blossom_defconfig
 
       - name: Build kernel
         run: |
           make O=out ARCH=arm64 \
-            CC=clang \
-            LD=lld \
+            CC=clang-14 \
+            LD=ld.lld-14 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
             -j$(nproc)
 
-      - name: Show boot artifacts
-        run: |
-          ls -lh out/arch/arm64/boot/ || true
-
+      - name: Show output
+        run: ls -lh out/arch/arm64/boot/
       - name: Upload kernel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-blossom
+          name: blossom-kernel
           path: |
             out/arch/arm64/boot/Image.gz-dtb
             out/arch/arm64/boot/Image.gz
-            out/arch/arm64/boot/Image
