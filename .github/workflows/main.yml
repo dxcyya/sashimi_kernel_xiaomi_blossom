@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout source
@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y bison flex bc libssl-dev zip python3
-          sudo apt install -y clang-14 lld-14 aarch64-linux-gnu-gcc
+          sudo apt install -y clang-14 lld-14 gcc-aarch64-linux-gnu
 
       - name: Fix armv8a typo
         run: |
