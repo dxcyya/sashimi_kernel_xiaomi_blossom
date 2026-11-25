@@ -1,4 +1,3 @@
-name: Build Kernel
 on:
   push:
     branches: [ sashimi ]
@@ -18,7 +17,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y bison flex bc libssl-dev zip python3
-          sudo apt install -y clang-14 lld-14 gcc-aarch64-linux-gnu
+          sudo apt install -y clang-14 gcc-aarch64-linux-gnu
 
       - name: Fix armv8a typo
         run: |
@@ -26,14 +25,14 @@ jobs:
 
       - name: Generate defconfig
         run: |
-          make O=out ARCH=arm64 CC=clang-14 LD=ld.lld-14 blossom_defconfig
+          make O=out ARCH=arm64 CC=clang-14 CROSS_COMPILE=aarch64-linux-gnu- LLVM_IAS=0 blossom_defconfig
 
       - name: Build kernel
         run: |
           make O=out ARCH=arm64 \
             CC=clang-14 \
-            LD=ld.lld-14 \
             CROSS_COMPILE=aarch64-linux-gnu- \
+            LLVM_IAS=0 \
             -j$(nproc)
 
       - name: Show output
