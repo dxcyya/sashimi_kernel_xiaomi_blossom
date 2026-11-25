@@ -20,7 +20,6 @@ jobs:
           sudo apt update
           sudo apt install -y \
             build-essential \
-            gcc-aarch64-linux-gnu \
             clang lld \
             bison flex \
             libssl-dev bc git python3 \
@@ -32,12 +31,13 @@ jobs:
 
       - name: Build defconfig
         run: |
-          make O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- blossom_defconfig
+          make O=out ARCH=arm64 CC=clang LD=lld blossom_defconfig
 
       - name: Build kernel
         run: |
           make O=out ARCH=arm64 \
-            CROSS_COMPILE=aarch64-linux-gnu- \
+            CC=clang \
+            LD=lld \
             -j$(nproc)
 
       - name: Show boot artifacts
