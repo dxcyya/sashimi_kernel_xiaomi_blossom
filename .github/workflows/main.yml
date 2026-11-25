@@ -1,11 +1,14 @@
 name: Build Kernel
+
 on:
   push:
     branches: [ sashimi ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -15,20 +18,37 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang lld bison flex libssl-dev bc git python3
+          sudo apt install -y \
+            build-essential \
+            gcc-aarch64-linux-gnu \
+            clang lld \
+            bison flex \
+            libssl-dev bc git python3 \
+            zip
 
-      - name: Download aarch64 gcc
+      - name: Verify defconfig file
         run: |
-          git clone https://github.com/osm0sis/arm64-gcc.git gcc
-          echo "$PWD/gcc/bin" >> $GITHUB_PATH
+          ls arch/arm64/configs/ | grep -i blossom || true
 
-      - name: Build
+      - name: Build defconfig
         run: |
-          make O=out ARCH=arm64 blossom_defconfig
-          make O=out ARCH=arm64 -j$(nproc) CC=clang LD=lld
+          make O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- blossom_defconfig
 
-      - name: Upload boot.img
+      - name: Build kernel
+        run: |
+          make O=out ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            -j$(nproc)
+
+      - name: Show boot artifacts
+        run: |
+          ls -lh out/arch/arm64/boot/ || true
+
+      - name: Upload kernel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-artifact
-          path: out/arch/arm64/boot/Image.gz-dtb
+          name: kernel-blossom
+          path: |
+            out/arch/arm64/boot/Image.gz-dtb
+            out/arch/arm64/boot/Image.gz
+            out/arch/arm64/boot/Image
